@@ -69,7 +69,7 @@ def resolve_version(app, cli_jar: Path):
         m = re.search(r"Most common compatible versions:\s*\n\s*([0-9]+(?:\.[0-9]+)*)", out.stdout)
         if not m:
             sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output:\n{out.stdout}")
-        return m.group(0)
+        return m.group(1)
     sys.exit(f"unknown version source type: {spec['type']}")
 
 
