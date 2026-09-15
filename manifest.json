@@ -2,5 +2,9 @@
   "brave": {
     "version": "1.95.101",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+  },
+  "duolingo": {
+    "version": "6.95.4",
+    "bundle": "https://github.com/hoo-dles/morphe-patches"
   }
 }
