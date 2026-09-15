@@ -65,6 +65,7 @@ def resolve_version(app, cli_jar: Path):
             "--patches", app["bundle"],
             "-f", app["package"],
         ], capture_output=True, text=True)
+        print(f"  list-versions output:\n{out.stdout}")
         m = re.search(r"\d+(?:\.\d+){1,3}", out.stdout)
         if not m:
             sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output:\n{out.stdout}")
@@ -181,6 +182,8 @@ def main():
             build_app(app, cli_jar)
         except subprocess.CalledProcessError as e:
             print(f"[{app['id']}] FAILED (exit {e.returncode}) — other apps continue", file=sys.stderr)
+        except SystemExit as e:
+            print(f"[{app['id']}] BLOCKED: {e.code} — other apps continue", file=sys.stderr)
 
 
 if __name__ == "__main__":
