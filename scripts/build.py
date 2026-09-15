@@ -86,6 +86,8 @@ def find_apkeep(dest: Path):
 
 
 def fetch_apk(app, version, dest: Path):
+    """Returns the actual downloaded file path (may differ from dest's extension
+    for apkeep, which can hand back a split-APK bundle: .xapk/.apkm/.apks)."""
     src = app["source"]
     if src["type"] == "github_release_asset":
         tag = src["tag_template"].format(version=version)
@@ -93,18 +95,19 @@ def fetch_apk(app, version, dest: Path):
         for a in rel.get("assets", []):
             if re.search(src["asset_regex"], a["name"]):
                 download(a["browser_download_url"], dest)
-                return
+                return dest
         sys.exit(f"no asset matching {src['asset_regex']} in {src['repo']}@{tag}")
     if src["type"] == "apkeep":
         apkeep_bin = find_apkeep(WORK / "apkeep")
         out_dir = dest.parent / "apkeep-out"
         out_dir.mkdir(exist_ok=True)
         run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure", out_dir])
-        apks = sorted(out_dir.glob("*.apk"))
-        if not apks:
-            sys.exit(f"apkeep produced no .apk for {app['id']}@{version}")
-        apks[-1].rename(dest)
-        return
+        found = sorted(out_dir.glob(f"{app['package']}@{version}.*"))
+        if not found:
+            sys.exit(f"apkeep produced no output for {app['id']}@{version}")
+        final = dest.with_suffix(found[-1].suffix)
+        found[-1].rename(final)
+        return final
     sys.exit(f"unknown source type: {src['type']}")
 
 
@@ -133,8 +136,7 @@ def build_app(app, cli_jar: Path):
         return
 
     print(f"[{app['id']}] building {app['name']} {version}")
-    apk = work / f"{app['id']}-{version}.apk"
-    fetch_apk(app, version, apk)
+    apk = fetch_apk(app, version, work / f"{app['id']}-{version}.apk")
 
     ks_b64 = os.environ.get("KEYSTORE_BKS", "")
     if not ks_b64:
