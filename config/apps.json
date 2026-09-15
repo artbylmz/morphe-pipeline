@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "id": "brave",
+      "name": "Brave Browser",
+      "package": "com.brave.browser",
+      "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+      "source": {
+        "type": "github_release_asset",
+        "repo": "brave/brave-browser",
+        "asset_regex": "Bravemonoarm64\\.apk$",
+        "tag_template": "v{version}"
+      },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/main/README.md",
+        "regex": "\\*\\*Current Target\\*\\*: `([0-9.]+)`"
+      }
+    }
+  ]
+}
