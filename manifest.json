@@ -14,5 +14,9 @@
   "proton-pass": {
     "version": "1.40.3",
     "bundle": "https://github.com/rushiranpise/morphe-patches"
+  },
+  "telegram": {
+    "version": "12.10.1",
+    "bundle": "https://github.com/rushiranpise/morphe-patches"
   }
 }
