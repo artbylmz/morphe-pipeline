@@ -18,5 +18,9 @@
   "telegram": {
     "version": "12.10.1",
     "bundle": "https://github.com/rushiranpise/morphe-patches"
+  },
+  "instagram": {
+    "version": "439.0.0.37.89",
+    "bundle": "https://github.com/crimera/piko"
   }
 }
