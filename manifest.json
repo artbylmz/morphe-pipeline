@@ -10,5 +10,9 @@
   "proton-vpn": {
     "version": "5.19.43.0",
     "bundle": "https://github.com/hoo-dles/morphe-patches"
+  },
+  "proton-pass": {
+    "version": "1.40.3",
+    "bundle": "https://github.com/rushiranpise/morphe-patches"
   }
 }
