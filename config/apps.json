@@ -8,7 +8,7 @@
       "source": {
         "type": "github_release_asset",
         "repo": "brave/brave-browser",
-        "asset_regex": "Bravemonoarm64\\.apk$",
+        "asset_regex": "BraveMonoarm64\\.apk$",
         "tag_template": "v{version}"
       },
       "version": {
