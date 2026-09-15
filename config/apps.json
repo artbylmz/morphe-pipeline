@@ -16,6 +16,51 @@
         "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/main/README.md",
         "regex": "\\*\\*Current Target\\*\\*: `([0-9.]+)`"
       }
+    },
+    {
+      "id": "duolingo",
+      "name": "Duolingo",
+      "package": "com.duolingo",
+      "bundle": "https://github.com/hoo-dles/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": { "type": "cli_list_versions" }
+    },
+    {
+      "id": "proton-vpn",
+      "name": "Proton VPN",
+      "package": "ch.protonvpn.android",
+      "bundle": "https://github.com/hoo-dles/morphe-patches",
+      "source": {
+        "type": "github_release_asset",
+        "repo": "ProtonVPN/android-app",
+        "asset_regex": "production-vanilla-direct-release\\.apk$",
+        "tag_template": "{version}"
+      },
+      "version": { "type": "cli_list_versions" }
+    },
+    {
+      "id": "proton-pass",
+      "name": "Proton Pass",
+      "package": "proton.android.pass",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Proton Pass\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "package": "org.telegram.messenger",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Telegram\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
     }
   ]
 }

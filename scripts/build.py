@@ -51,28 +51,60 @@ def download(url, dest: Path, headers=None):
     print(f"  downloaded {dest.name} ({dest.stat().st_size // 1024} KB)")
 
 
-def resolve_version(app):
+def resolve_version(app, cli_jar: Path):
     spec = app["version"]
-    if spec["type"] != "readme_regex":
-        sys.exit(f"unknown version source type: {spec['type']}")
-    text = gh_api(spec["url"], raw=True).decode()
-    m = re.search(spec["regex"], text)
-    if not m:
-        sys.exit(f"could not resolve version for {app['id']} — regex didn't match")
-    return m.group(1)
+    if spec["type"] == "readme_regex":
+        text = gh_api(spec["url"], raw=True).decode()
+        m = re.search(spec["regex"], text)
+        if not m:
+            sys.exit(f"could not resolve version for {app['id']} — regex didn't match")
+        return m.group(1)
+    if spec["type"] == "cli_list_versions":
+        out = run([
+            "java", "-jar", cli_jar, "list-versions",
+            "--patches", app["bundle"],
+            "-f", app["package"],
+        ], capture_output=True, text=True)
+        m = re.search(r"\d+(?:\.\d+){1,3}", out.stdout)
+        if not m:
+            sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output:\n{out.stdout}")
+        return m.group(0)
+    sys.exit(f"unknown version source type: {spec['type']}")
+
+
+def find_apkeep(dest: Path):
+    if dest.exists():
+        return dest
+    rel = gh_api("https://api.github.com/repos/EFForg/apkeep/releases/latest")
+    for a in rel.get("assets", []):
+        if a["name"] == "apkeep-x86_64-unknown-linux-gnu":
+            download(a["browser_download_url"], dest)
+            dest.chmod(0o755)
+            return dest
+    sys.exit("no linux x86_64 asset in apkeep latest release")
 
 
 def fetch_apk(app, version, dest: Path):
     src = app["source"]
-    if src["type"] != "github_release_asset":
-        sys.exit(f"unknown source type: {src['type']}")
-    tag = src["tag_template"].format(version=version)
-    rel = gh_api(f"https://api.github.com/repos/{src['repo']}/releases/tags/{tag}")
-    for a in rel.get("assets", []):
-        if re.search(src["asset_regex"], a["name"]):
-            download(a["browser_download_url"], dest)
-            return
-    sys.exit(f"no asset matching {src['asset_regex']} in {src['repo']}@{tag}")
+    if src["type"] == "github_release_asset":
+        tag = src["tag_template"].format(version=version)
+        rel = gh_api(f"https://api.github.com/repos/{src['repo']}/releases/tags/{tag}")
+        for a in rel.get("assets", []):
+            if re.search(src["asset_regex"], a["name"]):
+                download(a["browser_download_url"], dest)
+                return
+        sys.exit(f"no asset matching {src['asset_regex']} in {src['repo']}@{tag}")
+    if src["type"] == "apkeep":
+        apkeep_bin = find_apkeep(WORK / "apkeep")
+        out_dir = dest.parent / "apkeep-out"
+        out_dir.mkdir(exist_ok=True)
+        run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure", out_dir])
+        apks = sorted(out_dir.glob("*.apk"))
+        if not apks:
+            sys.exit(f"apkeep produced no .apk for {app['id']}@{version}")
+        apks[-1].rename(dest)
+        return
+    sys.exit(f"unknown source type: {src['type']}")
 
 
 def find_morphe_cli(dest: Path):
@@ -92,7 +124,7 @@ def run(cmd, **kw):
 def build_app(app, cli_jar: Path):
     work = WORK / app["id"]
     work.mkdir(parents=True, exist_ok=True)
-    version = resolve_version(app)
+    version = resolve_version(app, cli_jar)
 
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
     if manifest.get(app["id"], {}).get("version") == version:
