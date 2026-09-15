@@ -6,5 +6,9 @@
   "duolingo": {
     "version": "6.95.4",
     "bundle": "https://github.com/hoo-dles/morphe-patches"
+  },
+  "proton-vpn": {
+    "version": "5.19.43.0",
+    "bundle": "https://github.com/hoo-dles/morphe-patches"
   }
 }
