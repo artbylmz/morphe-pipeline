@@ -66,7 +66,7 @@ def resolve_version(app, cli_jar: Path):
             "-f", app["package"],
         ], capture_output=True, text=True)
         print(f"  list-versions output:\n{out.stdout}")
-        m = re.search(r"\d+(?:\.\d+){1,3}", out.stdout)
+        m = re.search(r"Most common compatible versions:\s*\n\s*([0-9]+(?:\.[0-9]+)*)", out.stdout)
         if not m:
             sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output:\n{out.stdout}")
         return m.group(0)
