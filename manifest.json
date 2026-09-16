@@ -1,0 +1,46 @@
+{
+  "brave": {
+    "version": "1.95.101",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+  },
+  "duolingo": {
+    "version": "6.95.4",
+    "bundle": "https://github.com/hoo-dles/morphe-patches"
+  },
+  "proton-vpn": {
+    "version": "5.19.43.0",
+    "bundle": "https://github.com/hoo-dles/morphe-patches"
+  },
+  "telegram": {
+    "version": "12.10.1",
+    "bundle": "https://github.com/rushiranpise/morphe-patches",
+    "package": "org.telegram.messenger.web"
+  },
+  "amazon": {
+    "version": "32.17.0.100",
+    "bundle": "https://github.com/rushiranpise/morphe-patches",
+    "package": "com.amazon.mShop.android.shopping"
+  },
+  "instagram": {
+    "version": "439.0.0.37.89",
+    "bundle": "https://github.com/crimera/piko"
+  },
+  "tiktok": {
+    "version": "46.9.3",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+  },
+  "youtube": {
+    "version": "21.13.164",
+    "bundle": "https://github.com/MorpheApp/morphe-patches"
+  },
+  "pinterest": {
+    "version": "14.23.0",
+    "bundle": "https://github.com/browzomje/browzomje-patches",
+    "package": "com.pinterest"
+  },
+  "proton-pass": {
+    "version": "1.40.3",
+    "bundle": "https://github.com/rushiranpise/morphe-patches",
+    "package": "proton.android.pass"
+  }
+}
