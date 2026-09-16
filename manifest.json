@@ -22,5 +22,9 @@
   "instagram": {
     "version": "439.0.0.37.89",
     "bundle": "https://github.com/crimera/piko"
+  },
+  "tiktok": {
+    "version": "46.9.3",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
   }
 }
