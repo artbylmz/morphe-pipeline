@@ -37,10 +37,5 @@
     "version": "14.23.0",
     "bundle": "https://github.com/browzomje/browzomje-patches",
     "package": "com.pinterest"
-  },
-  "proton-pass": {
-    "version": "1.40.3",
-    "bundle": "https://github.com/rushiranpise/morphe-patches",
-    "package": "proton.android.pass"
   }
 }
