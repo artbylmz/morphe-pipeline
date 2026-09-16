@@ -95,7 +95,7 @@
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/SouBryan/pinterest-morphed/HEAD/README.md",
-        "regex": "\\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\| Stable\\s*\\|\\s*Latest release"
+        "regex": "\\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\| \\*\\*Recommended\\*\\*"
       }
     },
     {
