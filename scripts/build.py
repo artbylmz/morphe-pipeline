@@ -29,6 +29,43 @@ WORK = Path(os.environ.get("WORK_DIR", "/tmp/morphe-build"))
 GH = os.environ.get("GH_TOKEN", "")
 REPO = os.environ.get("GITHUB_REPOSITORY", "")
 
+APKMIRROR_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+
+
+def apkmirror_fetch(url, referer=None):
+    req = urllib.request.Request(url, headers={"User-Agent": APKMIRROR_UA})
+    if referer:
+        req.add_header("Referer", referer)
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return r.read().decode(), r.geturl()
+
+
+def fetch_apkmirror(release_url: str, dest: Path):
+    """release_url -> release page -> /download/?key=... -> download.php?id=&key= -> 302 to CDN -> apk."""
+    page, _ = apkmirror_fetch(release_url)
+    m = re.search(r'class="[^"]*downloadButton[^"]*"\s+href="([^"]+)"', page)
+    if not m:
+        sys.exit(f"apkmirror: no downloadButton link on {release_url}")
+    key_url = "https://www.apkmirror.com" + m.group(1)
+
+    key_page, _ = apkmirror_fetch(key_url, referer=release_url)
+    m = re.search(r'id="download-link"[^>]*href="([^"]+)"', key_page)
+    if not m:
+        sys.exit(f"apkmirror: no download-link on {key_url}")
+    final_url = "https://www.apkmirror.com" + m.group(1)
+
+    req = urllib.request.Request(final_url, headers={"User-Agent": APKMIRROR_UA, "Referer": key_url})
+    with urllib.request.urlopen(req, timeout=300) as r:
+        # APKMirror serves either a plain .apk or a split-APK .apkm bundle;
+        # the real extension only shows up in the resolved CDN URL.
+        suffix = Path(r.geturl().split("?")[0]).suffix or ".apk"
+        actual = dest.with_suffix(suffix)
+        with open(actual, "wb") as f:
+            while chunk := r.read(1 << 20):
+                f.write(chunk)
+    print(f"  downloaded {actual.name} ({actual.stat().st_size // 1024} KB) via apkmirror")
+    return actual
+
 
 def gh_api(url, raw=False):
     req = urllib.request.Request(url)
@@ -100,17 +137,27 @@ def fetch_apk(app, version, dest: Path):
                 return dest
         sys.exit(f"no asset matching {src['asset_regex']} in {src['repo']}@{tag}")
     if src["type"] == "apkeep":
-        apkeep_bin = find_apkeep(WORK / "apkeep")
-        out_dir = dest.parent / "apkeep-out"
-        out_dir.mkdir(exist_ok=True)
-        run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure", out_dir])
-        found = sorted(out_dir.glob(f"{app['package']}@{version}.*"))
-        if not found:
-            sys.exit(f"apkeep produced no output for {app['id']}@{version}")
-        final = dest.with_suffix(found[-1].suffix)
-        found[-1].rename(final)
-        return final
+        return fetch_apkeep(app, version, dest)
+    if src["type"] == "apkmirror":
+        try:
+            return fetch_apkmirror(src["release_url"], dest)
+        except Exception as e:
+            print(f"  apkmirror failed ({e}), falling back to apkeep/apk-pure")
+            return fetch_apkeep(app, version, dest)
     sys.exit(f"unknown source type: {src['type']}")
+
+
+def fetch_apkeep(app, version, dest: Path):
+    apkeep_bin = find_apkeep(WORK / "apkeep")
+    out_dir = dest.parent / "apkeep-out"
+    out_dir.mkdir(exist_ok=True)
+    run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure", out_dir])
+    found = sorted(out_dir.glob(f"{app['package']}@{version}.*"))
+    if not found:
+        sys.exit(f"apkeep produced no output for {app['id']}@{version}")
+    final = dest.with_suffix(found[-1].suffix)
+    found[-1].rename(final)
+    return final
 
 
 def find_morphe_cli(dest: Path):

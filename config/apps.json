@@ -55,7 +55,10 @@
       "name": "Telegram Web",
       "package": "org.telegram.messenger.web",
       "bundle": "https://github.com/rushiranpise/morphe-patches",
-      "source": { "type": "apkeep" },
+      "source": {
+        "type": "apkmirror",
+        "release_url": "https://www.apkmirror.com/apk/telegram-fz-llc/telegram-web-version/telegram-web-version-12-10-1-release/telegram-web-version-12-10-1-android-apk-download/"
+      },
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
@@ -67,7 +70,10 @@
       "name": "Amazon Shopping",
       "package": "com.amazon.mShop.android.shopping",
       "bundle": "https://github.com/rushiranpise/morphe-patches",
-      "source": { "type": "apkeep" },
+      "source": {
+        "type": "apkmirror",
+        "release_url": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-shopping/amazon-shopping-32-17-0-100-release/amazon-shopping-32-17-0-100-android-apk-download/"
+      },
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
