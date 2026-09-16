@@ -43,8 +43,10 @@
       "name": "Proton Pass",
       "package": "proton.android.pass",
       "bundle": "https://github.com/rushiranpise/morphe-patches",
-      "source": { "type": "apkeep" },
-      "arch": "armeabi-v7a",
+      "source": {
+        "type": "apkmirror",
+        "release_url": "https://www.apkmirror.com/apk/proton-technologies-ag/proton-pass-password-manager/proton-pass-password-manager-1-40-3-release/proton-pass-password-manager-1-40-3-android-apk-download/"
+      },
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
