@@ -133,7 +133,8 @@ def build_app(app, cli_jar: Path):
     version = resolve_version(app, cli_jar)
 
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
-    if manifest.get(app["id"], {}).get("version") == version:
+    prev = manifest.get(app["id"], {})
+    if prev.get("version") == version and prev.get("package") == app["package"]:
         print(f"[{app['id']}] {version} already built — skipping")
         return
 
@@ -163,7 +164,7 @@ def build_app(app, cli_jar: Path):
          "--title", f"{app['name']} {version} (morphe)",
          "--notes", f"Bundle: {app['bundle']}\nVersion: {version}"] + (["--repo", REPO] if REPO else ["--repo", "artbylmz/morphe-pipeline"]))
 
-    manifest[app["id"]] = {"version": version, "bundle": app["bundle"]}
+    manifest[app["id"]] = {"version": version, "bundle": app["bundle"], "package": app["package"]}
     MANIFEST.write_text(json.dumps(manifest, indent=2))
     print(f"[{app['id']}] done → release {app['id']}-v{version}")
 
