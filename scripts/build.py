@@ -53,6 +53,8 @@ def download(url, dest: Path, headers=None):
 
 def resolve_version(app, cli_jar: Path):
     spec = app["version"]
+    if spec["type"] == "fixed":
+        return spec["version"]
     if spec["type"] == "readme_regex":
         text = gh_api(spec["url"], raw=True).decode()
         m = re.search(spec["regex"], text)

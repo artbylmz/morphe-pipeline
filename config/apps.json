@@ -52,14 +52,26 @@
     },
     {
       "id": "telegram",
-      "name": "Telegram",
-      "package": "org.telegram.messenger",
+      "name": "Telegram Web",
+      "package": "org.telegram.messenger.web",
       "bundle": "https://github.com/rushiranpise/morphe-patches",
       "source": { "type": "apkeep" },
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
-        "regex": "\\*\\*Telegram\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+        "regex": "\\*\\*Telegram Web\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon Shopping",
+      "package": "com.amazon.mShop.android.shopping",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Amazon Shopping\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
       }
     },
     {
@@ -90,13 +102,9 @@
       "id": "pinterest",
       "name": "Pinterest",
       "package": "com.pinterest",
-      "bundle": "https://github.com/SouBryan/pinterest-morphed",
+      "bundle": "https://github.com/browzomje/browzomje-patches",
       "source": { "type": "apkeep" },
-      "version": {
-        "type": "readme_regex",
-        "url": "https://raw.githubusercontent.com/SouBryan/pinterest-morphed/HEAD/README.md",
-        "regex": "\\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\| \\*\\*Recommended\\*\\*"
-      }
+      "version": { "type": "fixed", "version": "14.23.0" }
     },
     {
       "id": "youtube",
