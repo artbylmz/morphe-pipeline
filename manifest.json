@@ -26,5 +26,9 @@
   "tiktok": {
     "version": "46.9.3",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+  },
+  "youtube": {
+    "version": "21.13.164",
+    "bundle": "https://github.com/MorpheApp/morphe-patches"
   }
 }
