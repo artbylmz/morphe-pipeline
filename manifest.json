@@ -30,5 +30,9 @@
   "youtube": {
     "version": "21.13.164",
     "bundle": "https://github.com/MorpheApp/morphe-patches"
+  },
+  "pinterest": {
+    "version": "14.25.0",
+    "bundle": "https://github.com/SouBryan/pinterest-morphed"
   }
 }
