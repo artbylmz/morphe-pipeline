@@ -11,10 +11,6 @@
     "version": "5.19.43.0",
     "bundle": "https://github.com/hoo-dles/morphe-patches"
   },
-  "proton-pass": {
-    "version": "1.40.3",
-    "bundle": "https://github.com/rushiranpise/morphe-patches"
-  },
   "telegram": {
     "version": "12.10.1",
     "bundle": "https://github.com/rushiranpise/morphe-patches",

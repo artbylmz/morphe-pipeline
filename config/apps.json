@@ -44,6 +44,7 @@
       "package": "proton.android.pass",
       "bundle": "https://github.com/rushiranpise/morphe-patches",
       "source": { "type": "apkeep" },
+      "arch": "armeabi-v7a",
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
