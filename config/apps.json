@@ -1,0 +1,128 @@
+{
+  "apps": [
+    {
+      "id": "brave",
+      "name": "Brave Browser",
+      "package": "com.brave.browser",
+      "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+      "source": {
+        "type": "github_release_asset",
+        "repo": "brave/brave-browser",
+        "asset_regex": "BraveMonoarm64\\.apk$",
+        "tag_template": "v{version}"
+      },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/main/README.md",
+        "regex": "\\*\\*Current Target\\*\\*: `([0-9.]+)`"
+      }
+    },
+    {
+      "id": "duolingo",
+      "name": "Duolingo",
+      "package": "com.duolingo",
+      "bundle": "https://github.com/hoo-dles/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": { "type": "cli_list_versions" }
+    },
+    {
+      "id": "proton-vpn",
+      "name": "Proton VPN",
+      "package": "ch.protonvpn.android",
+      "bundle": "https://github.com/hoo-dles/morphe-patches",
+      "source": {
+        "type": "github_release_asset",
+        "repo": "ProtonVPN/android-app",
+        "asset_regex": "production-vanilla-direct-release\\.apk$",
+        "tag_template": "{version}"
+      },
+      "version": { "type": "cli_list_versions" }
+    },
+    {
+      "id": "proton-pass",
+      "name": "Proton Pass",
+      "package": "proton.android.pass",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Proton Pass\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram Web",
+      "package": "org.telegram.messenger.web",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": {
+        "type": "apkmirror",
+        "release_url": "https://www.apkmirror.com/apk/telegram-fz-llc/telegram-web-version/telegram-web-version-12-10-1-release/telegram-web-version-12-10-1-android-apk-download/"
+      },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Telegram Web\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon Shopping",
+      "package": "com.amazon.mShop.android.shopping",
+      "bundle": "https://github.com/rushiranpise/morphe-patches",
+      "source": {
+        "type": "apkmirror",
+        "release_url": "https://www.apkmirror.com/apk/amazon-mobile-llc/amazon-shopping/amazon-shopping-32-17-0-100-release/amazon-shopping-32-17-0-100-android-apk-download/"
+      },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/rushiranpise/morphe-patches/HEAD/README.md",
+        "regex": "\\*\\*Amazon Shopping\\*\\*\\][\\s\\S]*?`([0-9][^`]*)`"
+      }
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "package": "com.instagram.android",
+      "bundle": "https://github.com/crimera/piko",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/crimera/piko/HEAD/README.md",
+        "regex": "📦 Instagram[\\s\\S]*?\\| ([0-9]+(?:\\.[0-9]+)*) \\|"
+      }
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "package": "com.zhiliaoapp.musically",
+      "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/HEAD/README.md",
+        "regex": "🎵 TikTok[\\s\\S]*?\\*\\*Current Target\\*\\*: `([0-9]+(?:\\.[0-9]+)*)`"
+      }
+    },
+    {
+      "id": "pinterest",
+      "name": "Pinterest",
+      "package": "com.pinterest",
+      "bundle": "https://github.com/browzomje/browzomje-patches",
+      "source": { "type": "apkeep" },
+      "version": { "type": "fixed", "version": "14.23.0" }
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "package": "com.google.android.youtube",
+      "bundle": "https://github.com/MorpheApp/morphe-patches",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/HEAD/README.md",
+        "regex": "📦 YouTube[\\s\\S]*?\\| ([0-9]+(?:\\.[0-9]+)*) \\|"
+      }
+    }
+  ]
+}

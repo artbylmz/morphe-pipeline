@@ -1,0 +1,41 @@
+name: bootstrap
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  keystore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Generate BKS keystore
+        run: |
+          set -euo pipefail
+          curl -sSfL -o bcprov.jar \
+            https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1.jar
+
+          STOREPASS=$(openssl rand -base64 24)
+          KEYPASS=$(openssl rand -base64 24)
+
+          keytool -genkeypair -keystore morphe.keystore -storetype BKS \
+            -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
+            -providerpath bcprov.jar \
+            -alias morphe -keyalg RSA -keysize 4096 -validity 10000 \
+            -storepass "$STOREPASS" -keypass "$KEYPASS" -dname "CN=morphe"
+
+          base64 -w0 morphe.keystore > morphe.keystore.b64
+          echo "$STOREPASS" > keystore_password.txt
+          echo "$KEYPASS" > keystore_entry_password.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: morphe-keystore
+          path: |
+            morphe.keystore.b64
+            keystore_password.txt
+            keystore_entry_password.txt
+          retention-days: 1
