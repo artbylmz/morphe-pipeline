@@ -87,6 +87,18 @@
       }
     },
     {
+      "id": "pinterest",
+      "name": "Pinterest",
+      "package": "com.pinterest",
+      "bundle": "https://github.com/SouBryan/pinterest-morphed",
+      "source": { "type": "apkeep" },
+      "version": {
+        "type": "readme_regex",
+        "url": "https://raw.githubusercontent.com/SouBryan/pinterest-morphed/HEAD/README.md",
+        "regex": "\\| ([0-9]+\\.[0-9]+\\.[0-9]+) \\| Stable\\s*\\|\\s*Latest release"
+      }
+    },
+    {
       "id": "youtube",
       "name": "YouTube",
       "package": "com.google.android.youtube",
