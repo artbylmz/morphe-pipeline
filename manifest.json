@@ -1,7 +1,8 @@
 {
   "brave": {
-    "version": "1.95.101",
-    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+    "version": "1.95.102",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+    "package": "com.brave.browser"
   },
   "duolingo": {
     "version": "6.95.4",
