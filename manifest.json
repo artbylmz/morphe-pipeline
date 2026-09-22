@@ -26,11 +26,6 @@
     "version": "439.0.0.37.89",
     "bundle": "https://github.com/crimera/piko"
   },
-  "tiktok": {
-    "version": "47.0.3",
-    "bundle": "https://github.com/kveld9/kveld-morphe-patches",
-    "package": "com.zhiliaoapp.musically"
-  },
   "youtube": {
     "version": "21.13.164",
     "bundle": "https://github.com/MorpheApp/morphe-patches"
