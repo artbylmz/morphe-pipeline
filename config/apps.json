@@ -114,7 +114,7 @@
       "version": {
         "type": "readme_regex",
         "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/HEAD/README.md",
-        "regex": "\ud83c\udfb5 TikTok[\\s\\S]*?\\*\\*Current Target\\*\\*: `([0-9]+(?:\\.[0-9]+)*)`"
+        "regex": "\\*\\*TikTok\\*\\*[^\\n]*?\\| `([0-9]+(?:\\.[0-9]+)*)` \\|"
       },
       "disable_patches": [
         "Device Privacy Guard"
