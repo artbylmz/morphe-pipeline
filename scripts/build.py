@@ -204,6 +204,7 @@ def build_app(app, cli_jar: Path):
         "--keystore-entry-alias", os.environ["KEYSTORE_ALIAS"],
         "--keystore-entry-password", os.environ["KEYSTORE_ENTRY_PASSWORD"],
         "--striplibs", app.get("arch", "arm64-v8a"),
+        *[x for name in app.get("disable_patches", []) for x in ("-d", name)],
         apk,
     ], cwd=work)
 
