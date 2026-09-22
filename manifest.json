@@ -1,7 +1,8 @@
 {
   "brave": {
-    "version": "1.95.101",
-    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+    "version": "1.95.104",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+    "package": "com.brave.browser"
   },
   "duolingo": {
     "version": "6.95.4",
@@ -26,8 +27,9 @@
     "bundle": "https://github.com/crimera/piko"
   },
   "tiktok": {
-    "version": "46.9.3",
-    "bundle": "https://github.com/kveld9/kveld-morphe-patches"
+    "version": "47.0.3",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+    "package": "com.zhiliaoapp.musically"
   },
   "youtube": {
     "version": "21.13.164",
@@ -37,5 +39,10 @@
     "version": "14.23.0",
     "bundle": "https://github.com/browzomje/browzomje-patches",
     "package": "com.pinterest"
+  },
+  "proton-pass": {
+    "version": "1.40.3",
+    "bundle": "https://github.com/rushiranpise/morphe-patches",
+    "package": "proton.android.pass"
   }
 }
