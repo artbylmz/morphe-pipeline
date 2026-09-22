@@ -39,5 +39,10 @@
     "version": "1.40.3",
     "bundle": "https://github.com/rushiranpise/morphe-patches",
     "package": "proton.android.pass"
+  },
+  "tiktok": {
+    "version": "47.0.3",
+    "bundle": "https://github.com/kveld9/kveld-morphe-patches",
+    "package": "com.zhiliaoapp.musically"
   }
 }
