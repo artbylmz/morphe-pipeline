@@ -112,9 +112,7 @@
         "type": "apkeep"
       },
       "version": {
-        "type": "readme_regex",
-        "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/HEAD/README.md",
-        "regex": "\\*\\*TikTok\\*\\*[^\\n]*?\\| `([0-9]+(?:\\.[0-9]+)*)` \\|"
+        "type": "cli_list_versions"
       },
       "disable_patches": [
         "Device Privacy Guard"

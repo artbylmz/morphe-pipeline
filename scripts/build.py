@@ -174,6 +174,29 @@ def run(cmd, **kw):
     return subprocess.run([str(c) for c in cmd], check=True, **kw)
 
 
+APPLIED_RE = re.compile(r"INFO: Applied: ")
+
+
+def run_patch(cmd, cwd):
+    """Run `morphe-cli patch`, streaming its output live, and return how many
+    patches it reported as applied. morphe-cli exits 0 even when every patch was
+    skipped as incompatible (it then just re-signs the stock APK), so the exit
+    code alone can't tell a patched build from a vanilla one."""
+    print(f"  $ {' '.join(map(str, cmd))[:160]}", flush=True)
+    proc = subprocess.Popen([str(c) for c in cmd], cwd=cwd, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    applied = 0
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        if APPLIED_RE.search(line):
+            applied += 1
+    sys.stdout.flush()
+    rc = proc.wait()
+    if rc:
+        raise subprocess.CalledProcessError(rc, cmd)
+    return applied
+
+
 def build_app(app, cli_jar: Path):
     work = WORK / app["id"]
     work.mkdir(parents=True, exist_ok=True)
