@@ -1,12 +1,13 @@
 {
   "brave": {
-    "version": "1.95.104",
+    "version": "1.96.59",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches",
     "package": "com.brave.browser"
   },
   "duolingo": {
-    "version": "6.95.4",
-    "bundle": "https://github.com/hoo-dles/morphe-patches"
+    "version": "6.98.4",
+    "bundle": "https://github.com/hoo-dles/morphe-patches",
+    "package": "com.duolingo"
   },
   "proton-vpn": {
     "version": "5.19.43.0",
@@ -27,8 +28,9 @@
     "bundle": "https://github.com/crimera/piko"
   },
   "youtube": {
-    "version": "21.13.164",
-    "bundle": "https://github.com/MorpheApp/morphe-patches"
+    "version": "21.16.256",
+    "bundle": "https://github.com/MorpheApp/morphe-patches",
+    "package": "com.google.android.youtube"
   },
   "pinterest": {
     "version": "14.23.0",
