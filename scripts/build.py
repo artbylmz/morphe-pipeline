@@ -2,11 +2,15 @@
 """Crude v1 Morphe autobuild orchestrator.
 
 For each app in config/apps.json:
-  1. resolve target version (regex against a bundle README, for now)
+  1. resolve target version (preferably `morphe-cli list-versions` against the
+     released bundle; README regexes drift ahead of releases)
   2. skip if manifest.json says we already built that version
   3. fetch base APK from the configured source
   4. patch with morphe-cli (bundle given as repo URL — cli downloads the .mpp itself)
-  5. publish to a GitHub release, update manifest.json
+     and refuse to release if no patch was actually applied
+  5. publish to a GitHub release (tag gets -r2, -r3… if it already exists), update manifest.json
+  6. on GitHub Actions: open/update a `build-failure` issue per failing app with its
+     (redacted) log, and auto-close it once that app builds or is up to date again
 
 Everything is config-driven: adding an app = adding an entry, no code.
 Swapping a bundle = editing the "bundle" URL. Nothing else.
@@ -14,11 +18,13 @@ Swapping a bundle = editing the "bundle" URL. Nothing else.
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
+import traceback
 import urllib.request
 from pathlib import Path
 
@@ -67,6 +73,28 @@ def fetch_apkmirror(release_url: str, dest: Path):
     return actual
 
 
+def apkmirror_pick_variant(release_page: str, arch: str) -> str:
+    """Pick a download page from an APKMirror *release* page's variants table.
+    Prefers a plain APK over a split BUNDLE, then an exact arch match over universal."""
+    page, _ = apkmirror_fetch(release_page)
+    rows = []
+    for row in re.split(r'<div class="table-row headerFont">', page)[1:]:
+        href = re.search(r'href="(/apk/[^"]+-android-apk-download/)"', row)
+        kind = re.search(r'class="apkm-badge[^"]*"[^>]*>(APK|BUNDLE)<', row)
+        cells = [c.strip() for c in re.findall(r'<div class="table-cell[^"]*">([^<]+)</div>', row)]
+        if href and kind and cells:
+            rows.append((kind.group(1), cells[0], href.group(1)))
+    ok = [r for r in rows
+          if r[1] in ("universal", "noarch") or arch in [a.strip() for a in r[1].split("+")]]
+    if not ok:
+        # RuntimeError (not sys.exit) so fetch_apk falls back to apkeep
+        raise RuntimeError(f"no {arch}/universal variant on {release_page} (found: {rows})")
+    ok.sort(key=lambda r: (r[0] != "APK", r[1] != arch))
+    kind, variant_arch, href = ok[0]
+    print(f"  apkmirror variant: {kind} {variant_arch} -> {href}")
+    return "https://www.apkmirror.com" + href
+
+
 def gh_api(url, raw=False):
     req = urllib.request.Request(url)
     if GH:
@@ -103,11 +131,10 @@ def resolve_version(app, cli_jar: Path):
             "java", "-jar", cli_jar, "list-versions",
             "--patches", app["bundle"],
             "-f", app["package"],
-        ], capture_output=True, text=True)
-        print(f"  list-versions output:\n{out.stdout}")
-        m = re.search(r"Most common compatible versions:\s*\n\s*([0-9]+(?:\.[0-9]+)*)", out.stdout)
+        ])
+        m = re.search(r"Most common compatible versions:\s*\n\s*([0-9]+(?:\.[0-9]+)*)", out)
         if not m:
-            sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output:\n{out.stdout}")
+            sys.exit(f"could not resolve version for {app['id']} — no version in list-versions output")
         return m.group(1)
     sys.exit(f"unknown version source type: {spec['type']}")
 
@@ -140,6 +167,9 @@ def fetch_apk(app, version, dest: Path):
         return fetch_apkeep(app, version, dest)
     if src["type"] == "apkmirror":
         try:
+            if "release_page" in src:  # version-templated release page -> pick variant
+                page = src["release_page"].format(version=version, version_dashed=version.replace(".", "-"))
+                return fetch_apkmirror(apkmirror_pick_variant(page, app.get("arch", "arm64-v8a")), dest)
             return fetch_apkmirror(src["release_url"], dest)
         except Exception as e:
             print(f"  apkmirror failed ({e}), falling back to apkeep/apk-pure")
@@ -169,32 +199,92 @@ def find_morphe_cli(dest: Path):
     sys.exit("no .jar asset in morphe-cli latest release")
 
 
-def run(cmd, **kw):
-    print(f"  $ {' '.join(map(str, cmd))[:160]}")
-    return subprocess.run([str(c) for c in cmd], check=True, **kw)
+# Secrets that must never reach an issue body (issues on a public repo are not
+# masked the way Actions logs are). KEYSTORE_ALIAS is left out on purpose: it's
+# "morphe" (see bootstrap.yml) and masking it would mangle every path in the log.
+SECRET_ENV = ("KEYSTORE_PASSWORD", "KEYSTORE_ENTRY_PASSWORD", "KEYSTORE_BKS", "GH_TOKEN", "GITHUB_TOKEN")
+
+
+def redact(text: str) -> str:
+    for k in SECRET_ENV:
+        v = os.environ.get(k, "").strip()
+        if len(v) >= 6:
+            text = text.replace(v, f"<{k}>")
+    return text
+
+
+class Tee:
+    """stdout wrapper: everything printed also lands in the current app's buffer."""
+    def __init__(self, stream):
+        self.stream, self.buf = stream, None
+
+    def write(self, s):
+        if self.buf is not None:
+            self.buf.append(s)
+        return self.stream.write(s)
+
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
+
+
+def run(cmd, cwd=None, on_line=None):
+    """Run a command, streaming stdout+stderr live through sys.stdout (so it is
+    captured for failure reports). Returns the full output; raises
+    CalledProcessError with that output on a non-zero exit."""
+    print(f"  $ {redact(' '.join(map(str, cmd)))[:160]}", flush=True)
+    proc = subprocess.Popen([str(c) for c in cmd], cwd=cwd, text=True, errors="replace",
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    lines = []
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        lines.append(line)
+        if on_line:
+            on_line(line)
+    sys.stdout.flush()
+    out = "".join(lines)
+    if proc.wait():
+        raise subprocess.CalledProcessError(proc.returncode, cmd, output=out)
+    return out
 
 
 APPLIED_RE = re.compile(r"INFO: Applied: ")
 
 
 def run_patch(cmd, cwd):
-    """Run `morphe-cli patch`, streaming its output live, and return how many
-    patches it reported as applied. morphe-cli exits 0 even when every patch was
-    skipped as incompatible (it then just re-signs the stock APK), so the exit
-    code alone can't tell a patched build from a vanilla one."""
-    print(f"  $ {' '.join(map(str, cmd))[:160]}", flush=True)
-    proc = subprocess.Popen([str(c) for c in cmd], cwd=cwd, text=True,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    """Run `morphe-cli patch` and return how many patches it reported as applied.
+    morphe-cli exits 0 even when every patch was skipped as incompatible (it then
+    just re-signs the stock APK), so the exit code alone can't tell a patched
+    build from a vanilla one."""
     applied = 0
-    for line in proc.stdout:
-        sys.stdout.write(line)
+
+    def count(line):
+        nonlocal applied
         if APPLIED_RE.search(line):
             applied += 1
-    sys.stdout.flush()
-    rc = proc.wait()
-    if rc:
-        raise subprocess.CalledProcessError(rc, cmd)
+    run(cmd, cwd=cwd, on_line=count)
     return applied
+
+
+def repo_slug():
+    return REPO or "artbylmz/morphe-pipeline"
+
+
+def release_exists(tag: str) -> bool:
+    r = subprocess.run(["gh", "release", "view", tag, "--repo", repo_slug(), "--json", "tagName"],
+                       capture_output=True, text=True)
+    return r.returncode == 0
+
+
+def free_release_label(app, version) -> str:
+    """`<version>` if tag <id>-v<version> is free, else `<version>-r2`, `-r3`, …
+    (a rebuild forced by dropping the manifest entry must not die on
+    'a release with the same tag name already exists')."""
+    label = version
+    n = 1
+    while release_exists(f"{app['id']}-v{label}"):
+        n += 1
+        label = f"{version}-r{n}"
+    return label
 
 
 def build_app(app, cli_jar: Path):
@@ -204,11 +294,13 @@ def build_app(app, cli_jar: Path):
 
     manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
     prev = manifest.get(app["id"], {})
-    if prev.get("version") == version and prev.get("package") == app["package"]:
+    # Entries written before "package" was recorded count as the same package.
+    if prev.get("version") == version and prev.get("package", app["package"]) == app["package"]:
         print(f"[{app['id']}] {version} already built — skipping")
-        return
+        return "up to date"
 
-    print(f"[{app['id']}] building {app['name']} {version}")
+    label = free_release_label(app, version)
+    print(f"[{app['id']}] building {app['name']} {version} (release {app['id']}-v{label})")
     apk = fetch_apk(app, version, work / f"{app['id']}-{version}.apk")
 
     ks_b64 = os.environ.get("KEYSTORE_BKS", "")
@@ -217,7 +309,7 @@ def build_app(app, cli_jar: Path):
     keystore = work / "sign.keystore"
     keystore.write_bytes(base64.b64decode(ks_b64))
 
-    out = work / f"{app['id']}-{version}-morphe.apk"
+    out = work / f"{app['id']}-{label}-morphe.apk"
     applied = run_patch([
         "java", "-jar", cli_jar, "patch",
         "-p", app["bundle"],
@@ -240,18 +332,89 @@ def build_app(app, cli_jar: Path):
         sys.exit(f"only {applied} patch(es) applied to {version} (need >= {min_applied}) — "
                  f"bundle probably doesn't support this version yet; refusing to release a vanilla APK")
 
-    run(["gh", "release", "create", f"{app['id']}-v{version}", out,
-         "--title", f"{app['name']} {version} (morphe)",
-         "--notes", f"Bundle: {app['bundle']}\nVersion: {version}"] + (["--repo", REPO] if REPO else ["--repo", "artbylmz/morphe-pipeline"]))
+    run(["gh", "release", "create", f"{app['id']}-v{label}", out,
+         "--title", f"{app['name']} {label} (morphe)",
+         "--notes", f"Bundle: {app['bundle']}\nVersion: {version}\nPatches applied: {applied}",
+         "--repo", repo_slug()])
 
     manifest[app["id"]] = {"version": version, "bundle": app["bundle"], "package": app["package"]}
-    MANIFEST.write_text(json.dumps(manifest, indent=2))
-    print(f"[{app['id']}] done → release {app['id']}-v{version}")
+    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
+    print(f"[{app['id']}] done → release {app['id']}-v{label}")
+    return f"built {app['id']}-v{label} ({applied} patches)"
+
+
+ISSUE_LABEL = "build-failure"
+LOG_TAIL_LINES = 250
+ISSUE_BODY_MAX = 60000  # GitHub caps issue/comment bodies at 65536 chars
+
+
+def run_url():
+    rid = os.environ.get("GITHUB_RUN_ID")
+    server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
+    return f"{server}/{repo_slug()}/actions/runs/{rid}" if rid else "(local run)"
+
+
+def gh_quiet(*args):
+    return subprocess.run(["gh", *args, "--repo", repo_slug()], capture_output=True, text=True)
+
+
+def open_failure_issue(title):
+    r = gh_quiet("issue", "list", "--label", ISSUE_LABEL, "--state", "open",
+                 "--limit", "100", "--json", "number,title")
+    if r.returncode:
+        raise RuntimeError(f"gh issue list failed: {r.stderr.strip()}")
+    return next((i["number"] for i in json.loads(r.stdout) if i["title"] == title), None)
+
+
+def issue_title(app_id):
+    return f"[build-failure] {app_id}"
+
+
+def report_failure(app_id, summary, log):
+    """Open (or comment on) one issue per failing app. Repeats of the same error
+    are not re-commented, so a daily failure doesn't spam notifications."""
+    sig = hashlib.sha1(re.sub(r"/tmp/\S+", "", summary).encode()).hexdigest()[:12]
+    marker = f"<!-- failure-sig:{sig} -->"
+    tail = "".join(log).splitlines()[-LOG_TAIL_LINES:]
+    text = redact("\n".join(tail)).replace("```", "``\u200b`")
+    body = (f"{marker}\n**App:** `{app_id}`\n**Run:** {run_url()}\n\n"
+            f"**Error:** {redact(summary)}\n\n"
+            f"<details><summary>Last {len(tail)} log lines</summary>\n\n```\n{{LOG}}\n```\n</details>\n\n"
+            f"_Opened automatically by build.py; closed automatically once `{app_id}` builds again._")
+    room = ISSUE_BODY_MAX - len(body)
+    body = body.replace("{LOG}", text[-room:] if len(text) > room else text)
+
+    title = issue_title(app_id)
+    num = open_failure_issue(title)
+    if num is None:
+        gh_quiet("label", "create", ISSUE_LABEL, "--color", "B60205",
+                 "--description", "Opened automatically when a pipeline build fails", "--force")
+        r = gh_quiet("issue", "create", "--title", title, "--label", ISSUE_LABEL, "--body", body)
+        print(f"  opened issue: {r.stdout.strip() or r.stderr.strip()}")
+        return
+    r = gh_quiet("issue", "view", str(num), "--json", "body,comments")
+    seen = json.loads(r.stdout) if r.returncode == 0 else {"body": "", "comments": []}
+    latest = (seen["comments"][-1]["body"] if seen["comments"] else seen["body"]) or ""
+    if marker in latest:
+        print(f"  issue #{num} already has this error — not commenting again")
+        return
+    gh_quiet("issue", "comment", str(num), "--body", body)
+    print(f"  commented on issue #{num} (error changed)")
+
+
+def resolve_failure(app_id, status):
+    num = open_failure_issue(issue_title(app_id))
+    if num is not None:
+        gh_quiet("issue", "close", str(num), "--comment", f"Fixed: {status}. Run: {run_url()}")
+        print(f"  closed issue #{num} ({app_id}: {status})")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--app", default="all")
+    ap.add_argument("--report", action="store_true",
+                    default=os.environ.get("GITHUB_ACTIONS") == "true",
+                    help="open/close GitHub issues for failures (default: on in GitHub Actions)")
     args = ap.parse_args()
 
     apps = json.loads(CONFIG.read_text())["apps"]
@@ -260,15 +423,55 @@ def main():
         if not apps:
             sys.exit(f"no app with id {args.app!r}")
 
+    tee = Tee(sys.stdout)
+    sys.stdout = tee
     WORK.mkdir(parents=True, exist_ok=True)
-    cli_jar = find_morphe_cli(WORK / "morphe-cli.jar")
+    results = {}
+
+    # Pipeline-level step (morphe-cli download); a failure here fails every app.
+    tee.buf = []
+    try:
+        cli_jar = find_morphe_cli(WORK / "morphe-cli.jar")
+    except BaseException as e:
+        summary = f"could not fetch morphe-cli: {e}"
+        print(traceback.format_exc())
+        if args.report:
+            report_failure("pipeline", summary, tee.buf)
+        sys.exit(summary)
+    if args.report:
+        resolve_failure("pipeline", "morphe-cli fetched")
+
     for app in apps:
+        tee.buf = []
         try:
-            build_app(app, cli_jar)
+            status = build_app(app, cli_jar) or "ok"
+            results[app["id"]] = (True, status)
         except subprocess.CalledProcessError as e:
-            print(f"[{app['id']}] FAILED (exit {e.returncode}) — other apps continue", file=sys.stderr)
+            cmd = redact(" ".join(map(str, e.cmd)))[:200]
+            results[app["id"]] = (False, f"command failed (exit {e.returncode}): `{cmd}`")
         except SystemExit as e:
-            print(f"[{app['id']}] BLOCKED: {e.code} — other apps continue", file=sys.stderr)
+            results[app["id"]] = (False, str(e.code))
+        except Exception as e:
+            print(traceback.format_exc())
+            results[app["id"]] = (False, f"{type(e).__name__}: {e}")
+        ok, status = results[app["id"]]
+        if not ok:
+            print(f"[{app['id']}] FAILED: {status} — other apps continue")
+        log = tee.buf
+        tee.buf = None
+        if args.report:
+            try:
+                (resolve_failure if ok else report_failure)(app["id"], status, *([] if ok else [log]))
+            except Exception as e:  # reporting must never take the build down
+                print(f"  (issue reporting for {app['id']} failed: {e})")
+
+    print("\n== summary ==")
+    for app_id, (ok, status) in results.items():
+        print(f"  {'OK  ' if ok else 'FAIL'} {app_id}: {status}")
+    failed = [a for a, (ok, _) in results.items() if not ok]
+    if failed:
+        # Non-zero so the run shows red; the workflow still commits the manifest.
+        sys.exit(f"{len(failed)} app(s) failed: {', '.join(failed)}")
 
 
 if __name__ == "__main__":

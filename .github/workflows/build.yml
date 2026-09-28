@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  issues: write   # build.py opens/closes `build-failure` issues
 
 jobs:
   build:
@@ -35,6 +36,8 @@ jobs:
         run: python3 scripts/build.py --app "${{ github.event.inputs.app || 'all' }}"
 
       - name: Commit manifest
+        # still commit successful apps' manifest entries when another app failed
+        if: ${{ !cancelled() }}
         run: |
           git config user.name 'ylmz'
           git config user.email 'artbylmz@users.noreply.github.com'

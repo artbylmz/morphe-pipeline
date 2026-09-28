@@ -12,9 +12,7 @@
         "tag_template": "v{version}"
       },
       "version": {
-        "type": "readme_regex",
-        "url": "https://raw.githubusercontent.com/kveld9/kveld-morphe-patches/main/README.md",
-        "regex": "\\*\\*Current Target\\*\\*: `([0-9.]+)`"
+        "type": "cli_list_versions"
       }
     },
     {
@@ -137,12 +135,11 @@
       "package": "com.google.android.youtube",
       "bundle": "https://github.com/MorpheApp/morphe-patches",
       "source": {
-        "type": "apkeep"
+        "type": "apkmirror",
+        "release_page": "https://www.apkmirror.com/apk/google-inc/youtube/youtube-{version_dashed}-release/"
       },
       "version": {
-        "type": "readme_regex",
-        "url": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/HEAD/README.md",
-        "regex": "\ud83d\udce6 YouTube[\\s\\S]*?\\| ([0-9]+(?:\\.[0-9]+)*) \\|"
+        "type": "cli_list_versions"
       }
     }
   ]
