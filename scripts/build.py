@@ -218,7 +218,7 @@ def build_app(app, cli_jar: Path):
     keystore.write_bytes(base64.b64decode(ks_b64))
 
     out = work / f"{app['id']}-{version}-morphe.apk"
-    run([
+    applied = run_patch([
         "java", "-jar", cli_jar, "patch",
         "-p", app["bundle"],
         "-o", out,
@@ -230,6 +230,15 @@ def build_app(app, cli_jar: Path):
         *[x for name in app.get("disable_patches", []) for x in ("-d", name)],
         apk,
     ], cwd=work)
+
+    # Never publish an unpatched APK: that's what shipped as tiktok-v47.1.3
+    # (bundle README bumped to 47.1.3 before the released .mpp did, so all 50
+    # patches were skipped as incompatible and the stock app got released).
+    min_applied = app.get("min_patches_applied", 1)
+    print(f"  {applied} patch(es) applied (minimum {min_applied})", flush=True)
+    if applied < min_applied:
+        sys.exit(f"only {applied} patch(es) applied to {version} (need >= {min_applied}) — "
+                 f"bundle probably doesn't support this version yet; refusing to release a vanilla APK")
 
     run(["gh", "release", "create", f"{app['id']}-v{version}", out,
          "--title", f"{app['name']} {version} (morphe)",
