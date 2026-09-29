@@ -43,7 +43,7 @@
     "package": "proton.android.pass"
   },
   "tiktok": {
-    "version": "47.0.3",
+    "version": "47.1.3",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches",
     "package": "com.zhiliaoapp.musically"
   }
