@@ -10,8 +10,9 @@
     "package": "com.duolingo"
   },
   "proton-vpn": {
-    "version": "5.19.43.0",
-    "bundle": "https://github.com/hoo-dles/morphe-patches"
+    "version": "5.20.57.0",
+    "bundle": "https://github.com/hoo-dles/morphe-patches",
+    "package": "ch.protonvpn.android"
   },
   "telegram": {
     "version": "12.10.1",
