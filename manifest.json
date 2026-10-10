@@ -1,6 +1,6 @@
 {
   "brave": {
-    "version": "1.96.61",
+    "version": "1.97.56",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches",
     "package": "com.brave.browser"
   },
