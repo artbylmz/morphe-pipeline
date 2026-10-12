@@ -29,7 +29,7 @@
     "bundle": "https://github.com/crimera/piko"
   },
   "youtube": {
-    "version": "21.16.256",
+    "version": "21.20.405",
     "bundle": "https://github.com/MorpheApp/morphe-patches",
     "package": "com.google.android.youtube"
   },
