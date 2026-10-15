@@ -51,13 +51,13 @@ def fetch_apkmirror(release_url: str, dest: Path):
     page, _ = apkmirror_fetch(release_url)
     m = re.search(r'class="[^"]*downloadButton[^"]*"\s+href="([^"]+)"', page)
     if not m:
-        sys.exit(f"apkmirror: no downloadButton link on {release_url}")
+        raise RuntimeError(f"apkmirror: no downloadButton link on {release_url}")
     key_url = "https://www.apkmirror.com" + m.group(1)
 
     key_page, _ = apkmirror_fetch(key_url, referer=release_url)
     m = re.search(r'id="download-link"[^>]*href="([^"]+)"', key_page)
     if not m:
-        sys.exit(f"apkmirror: no download-link on {key_url}")
+        raise RuntimeError(f"apkmirror: no download-link on {key_url}")
     final_url = "https://www.apkmirror.com" + m.group(1)
 
     req = urllib.request.Request(final_url, headers={"User-Agent": APKMIRROR_UA, "Referer": key_url})
@@ -116,6 +116,35 @@ def download(url, dest: Path, headers=None):
     print(f"  downloaded {dest.name} ({dest.stat().st_size // 1024} KB)")
 
 
+BUNDLE_CACHE = {}
+
+
+def find_bundle(bundle_spec: str) -> Path:
+    if bundle_spec in BUNDLE_CACHE:
+        return BUNDLE_CACHE[bundle_spec]
+    if bundle_spec.endswith(".mpp") and Path(bundle_spec).exists():
+        p = Path(bundle_spec)
+        BUNDLE_CACHE[bundle_spec] = p
+        return p
+    if "github.com/" in bundle_spec:
+        m = re.search(r"github\.com/([^/]+)/([^/]+)", bundle_spec)
+        if not m:
+            sys.exit(f"invalid github bundle url: {bundle_spec}")
+        owner, repo = m.group(1), m.group(2).rstrip("/")
+        rel = gh_api(f"https://api.github.com/repos/{owner}/{repo}/releases/latest")
+        tag = rel.get("tag_name", "latest")
+        for a in rel.get("assets", []):
+            if a["name"].endswith(".mpp"):
+                dest = WORK / "bundles" / f"{owner}_{repo}_{tag}_{a['name']}"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if not dest.exists():
+                    download(a["browser_download_url"], dest)
+                BUNDLE_CACHE[bundle_spec] = dest
+                return dest
+        sys.exit(f"no .mpp asset in {owner}/{repo} latest release")
+    sys.exit(f"unsupported bundle specification: {bundle_spec}")
+
+
 def resolve_version(app, cli_jar: Path):
     spec = app["version"]
     if spec["type"] == "fixed":
@@ -127,9 +156,10 @@ def resolve_version(app, cli_jar: Path):
             sys.exit(f"could not resolve version for {app['id']} — regex didn't match")
         return m.group(1)
     if spec["type"] == "cli_list_versions":
+        bundle_file = find_bundle(app["bundle"])
         out = run([
             "java", "-jar", cli_jar, "list-versions",
-            "--patches", app["bundle"],
+            "--patches", bundle_file,
             "-f", app["package"],
         ])
         m = re.search(r"Most common compatible versions:\s*\n\s*([0-9]+(?:\.[0-9]+)*)", out)
@@ -181,7 +211,8 @@ def fetch_apkeep(app, version, dest: Path):
     apkeep_bin = find_apkeep(WORK / "apkeep")
     out_dir = dest.parent / "apkeep-out"
     out_dir.mkdir(exist_ok=True)
-    run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure", out_dir])
+    run([apkeep_bin, "-a", f"{app['package']}@{version}", "-d", "apk-pure",
+         "-o", "acknowledge_dangers=true", out_dir])
     found = sorted(out_dir.glob(f"{app['package']}@{version}.*"))
     if not found:
         sys.exit(f"apkeep produced no output for {app['id']}@{version}")
@@ -301,6 +332,7 @@ def build_app(app, cli_jar: Path):
 
     label = free_release_label(app, version)
     print(f"[{app['id']}] building {app['name']} {version} (release {app['id']}-v{label})")
+    bundle_file = find_bundle(app["bundle"])
     apk = fetch_apk(app, version, work / f"{app['id']}-{version}.apk")
 
     ks_b64 = os.environ.get("KEYSTORE_BKS", "")
@@ -312,7 +344,7 @@ def build_app(app, cli_jar: Path):
     out = work / f"{app['id']}-{label}-morphe.apk"
     applied = run_patch([
         "java", "-jar", cli_jar, "patch",
-        "-p", app["bundle"],
+        "-p", bundle_file,
         "-o", out,
         "--keystore", keystore,
         "--keystore-password", os.environ["KEYSTORE_PASSWORD"],
