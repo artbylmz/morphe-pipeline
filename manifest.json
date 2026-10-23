@@ -1,6 +1,6 @@
 {
   "brave": {
-    "version": "1.97.57",
+    "version": "1.98.60",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches",
     "package": "com.brave.browser"
   },
@@ -45,7 +45,7 @@
     "package": "proton.android.pass"
   },
   "tiktok": {
-    "version": "47.1.4",
+    "version": "47.4.3",
     "bundle": "https://github.com/kveld9/kveld-morphe-patches",
     "package": "com.zhiliaoapp.musically"
   }
