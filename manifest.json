@@ -40,7 +40,7 @@
     "package": "com.pinterest"
   },
   "proton-pass": {
-    "version": "1.41.3",
+    "version": "1.41.5",
     "bundle": "https://github.com/rushiranpise/morphe-patches",
     "package": "proton.android.pass"
   },
