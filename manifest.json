@@ -20,7 +20,7 @@
     "package": "org.telegram.messenger.web"
   },
   "amazon": {
-    "version": "32.18.0.100",
+    "version": "32.19.0.100",
     "bundle": "https://github.com/rushiranpise/morphe-patches",
     "package": "com.amazon.mShop.android.shopping"
   },
