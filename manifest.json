@@ -30,7 +30,7 @@
     "package": "com.instagram.android"
   },
   "youtube": {
-    "version": "21.20.405",
+    "version": "21.30.216",
     "bundle": "https://github.com/MorpheApp/morphe-patches",
     "package": "com.google.android.youtube"
   },
